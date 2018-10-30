@@ -6,3 +6,6 @@ images/
 *.o
 *.jou
 *.log
+subsystems
+!subsystems_wavegen
+!subsystems_wifi

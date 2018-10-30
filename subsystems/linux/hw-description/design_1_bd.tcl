@@ -147,11 +147,29 @@ proc create_root_design { parentCell } {
   set FIXED_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
 
   # Create ports
-  set dac_clk [ create_bd_port -dir O dac_clk ]
-  set dac_data_o [ create_bd_port -dir O -from 13 -to 0 dac_data_o ]
+  set PL_PMOD_PIN1 [ create_bd_port -dir I PL_PMOD_PIN1 ]
+  set PL_PMOD_PIN2 [ create_bd_port -dir O PL_PMOD_PIN2 ]
+  set PL_PMOD_PIN3 [ create_bd_port -dir I PL_PMOD_PIN3 ]
+  set PL_PMOD_PIN4 [ create_bd_port -dir O PL_PMOD_PIN4 ]
+  set PL_PMOD_PIN7 [ create_bd_port -dir O PL_PMOD_PIN7 ]
+  set PL_PMOD_PIN8 [ create_bd_port -dir I PL_PMOD_PIN8 ]
+  set WL_CLK [ create_bd_port -dir O WL_CLK ]
+  set WL_CMD [ create_bd_port -dir IO WL_CMD ]
+  set WL_DAT [ create_bd_port -dir IO -from 3 -to 0 WL_DAT ]
+  set WL_HOST_WAKE [ create_bd_port -dir I WL_HOST_WAKE ]
+  set WL_REG_ON [ create_bd_port -dir O WL_REG_ON ]
+  set dac_clk_out [ create_bd_port -dir O dac_clk_out ]
+  set dac_data_out [ create_bd_port -dir O -from 13 -to 0 dac_data_out ]
+
+  # Create instance: PL_pmod_mgr_0, and set properties
+  set PL_pmod_mgr_0 [ create_bd_cell -type ip -vlnv vttek.vn:user:PL_pmod_mgr:1.0 PL_pmod_mgr_0 ]
 
   # Create instance: axi_bram_ctrl_0, and set properties
   set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.0 axi_bram_ctrl_0 ]
+  set_property -dict [ list \
+CONFIG.ECC_TYPE {Hamming} \
+CONFIG.PROTOCOL {AXI4} \
+ ] $axi_bram_ctrl_0
 
   # Create instance: axi_bram_ctrl_0_bram, and set properties
   set axi_bram_ctrl_0_bram [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.3 axi_bram_ctrl_0_bram ]
@@ -162,59 +180,39 @@ CONFIG.Memory_Type {True_Dual_Port_RAM} \
   # Create instance: axi_gpio_0, and set properties
   set axi_gpio_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0 ]
   set_property -dict [ list \
-CONFIG.C_GPIO_WIDTH {1} \
+CONFIG.C_GPIO_WIDTH {8} \
 CONFIG.C_IS_DUAL {1} \
  ] $axi_gpio_0
 
   # Create instance: dac_core_0, and set properties
-  set dac_core_0 [ create_bd_cell -type ip -vlnv xilinx.com:user:dac_core:1.0 dac_core_0 ]
+  set dac_core_0 [ create_bd_cell -type ip -vlnv vttek.vn:user:dac_core:1.0 dac_core_0 ]
 
-  # Create instance: ila_0, and set properties
-  set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.0 ila_0 ]
-  set_property -dict [ list \
-CONFIG.C_DATA_DEPTH {2048} \
-CONFIG.C_ENABLE_ILA_AXI_MON {false} \
-CONFIG.C_MONITOR_TYPE {Native} \
-CONFIG.C_NUM_OF_PROBES {5} \
- ] $ila_0
+  # Create instance: gpio_mgr_0, and set properties
+  set gpio_mgr_0 [ create_bd_cell -type ip -vlnv vttek.vn:user:gpio_mgr:1.0 gpio_mgr_0 ]
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
   set_property -dict [ list \
-CONFIG.PCW_APU_CLK_RATIO_ENABLE {6:2:1} \
-CONFIG.PCW_APU_PERIPHERAL_FREQMHZ {667} \
-CONFIG.PCW_CPU_PERIPHERAL_CLKSRC {ARM PLL} \
-CONFIG.PCW_CRYSTAL_PERIPHERAL_FREQMHZ {33.333333} \
-CONFIG.PCW_DDR_PERIPHERAL_CLKSRC {DDR PLL} \
 CONFIG.PCW_ENET0_ENET0_IO {MIO 16 .. 27} \
 CONFIG.PCW_ENET0_GRP_MDIO_ENABLE {1} \
-CONFIG.PCW_ENET0_GRP_MDIO_IO {MIO 52 .. 53} \
-CONFIG.PCW_ENET0_PERIPHERAL_CLKSRC {IO PLL} \
 CONFIG.PCW_ENET0_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_ENET0_PERIPHERAL_FREQMHZ {1000 Mbps} \
 CONFIG.PCW_ENET1_PERIPHERAL_ENABLE {0} \
+CONFIG.PCW_ENET_RESET_ENABLE {1} \
 CONFIG.PCW_EN_CLK0_PORT {1} \
-CONFIG.PCW_EN_CLK1_PORT {0} \
+CONFIG.PCW_EN_CLK1_PORT {1} \
 CONFIG.PCW_EN_CLK2_PORT {0} \
 CONFIG.PCW_EN_CLK3_PORT {0} \
-CONFIG.PCW_EN_DDR {1} \
 CONFIG.PCW_EN_RST0_PORT {1} \
 CONFIG.PCW_EN_RST1_PORT {0} \
-CONFIG.PCW_EN_RST2_PORT {0} \
-CONFIG.PCW_EN_RST3_PORT {0} \
-CONFIG.PCW_FCLK0_PERIPHERAL_CLKSRC {IO PLL} \
-CONFIG.PCW_FCLK1_PERIPHERAL_CLKSRC {IO PLL} \
-CONFIG.PCW_FCLK2_PERIPHERAL_CLKSRC {IO PLL} \
-CONFIG.PCW_FCLK3_PERIPHERAL_CLKSRC {IO PLL} \
-CONFIG.PCW_FCLK_CLK0_BUF {true} \
 CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {50} \
 CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {100} \
-CONFIG.PCW_FPGA2_PERIPHERAL_FREQMHZ {33.333333} \
-CONFIG.PCW_FPGA3_PERIPHERAL_FREQMHZ {50} \
-CONFIG.PCW_GPIO_EMIO_GPIO_ENABLE {0} \
+CONFIG.PCW_FPGA2_PERIPHERAL_FREQMHZ {100.000000} \
+CONFIG.PCW_FPGA3_PERIPHERAL_FREQMHZ {25} \
+CONFIG.PCW_GPIO_EMIO_GPIO_ENABLE {1} \
+CONFIG.PCW_GPIO_EMIO_GPIO_IO {4} \
 CONFIG.PCW_GPIO_MIO_GPIO_ENABLE {1} \
-CONFIG.PCW_GPIO_PERIPHERAL_ENABLE {1} \
 CONFIG.PCW_I2C_RESET_ENABLE {0} \
+CONFIG.PCW_IRQ_F2P_INTR {1} \
 CONFIG.PCW_MIO_0_PULLUP {disabled} \
 CONFIG.PCW_MIO_0_SLEW {slow} \
 CONFIG.PCW_MIO_10_PULLUP {disabled} \
@@ -259,6 +257,7 @@ CONFIG.PCW_MIO_28_PULLUP {disabled} \
 CONFIG.PCW_MIO_28_SLEW {slow} \
 CONFIG.PCW_MIO_29_PULLUP {disabled} \
 CONFIG.PCW_MIO_29_SLEW {slow} \
+CONFIG.PCW_MIO_2_PULLUP {disabled} \
 CONFIG.PCW_MIO_2_SLEW {slow} \
 CONFIG.PCW_MIO_30_PULLUP {disabled} \
 CONFIG.PCW_MIO_30_SLEW {slow} \
@@ -280,6 +279,7 @@ CONFIG.PCW_MIO_38_PULLUP {disabled} \
 CONFIG.PCW_MIO_38_SLEW {slow} \
 CONFIG.PCW_MIO_39_PULLUP {disabled} \
 CONFIG.PCW_MIO_39_SLEW {slow} \
+CONFIG.PCW_MIO_3_PULLUP {disabled} \
 CONFIG.PCW_MIO_3_SLEW {slow} \
 CONFIG.PCW_MIO_40_PULLUP {disabled} \
 CONFIG.PCW_MIO_40_SLEW {slow} \
@@ -301,6 +301,7 @@ CONFIG.PCW_MIO_48_PULLUP {disabled} \
 CONFIG.PCW_MIO_48_SLEW {slow} \
 CONFIG.PCW_MIO_49_PULLUP {disabled} \
 CONFIG.PCW_MIO_49_SLEW {slow} \
+CONFIG.PCW_MIO_4_PULLUP {disabled} \
 CONFIG.PCW_MIO_4_SLEW {slow} \
 CONFIG.PCW_MIO_50_PULLUP {disabled} \
 CONFIG.PCW_MIO_50_SLEW {slow} \
@@ -310,76 +311,49 @@ CONFIG.PCW_MIO_52_PULLUP {disabled} \
 CONFIG.PCW_MIO_52_SLEW {slow} \
 CONFIG.PCW_MIO_53_PULLUP {disabled} \
 CONFIG.PCW_MIO_53_SLEW {slow} \
+CONFIG.PCW_MIO_5_PULLUP {disabled} \
 CONFIG.PCW_MIO_5_SLEW {slow} \
+CONFIG.PCW_MIO_6_PULLUP {disabled} \
 CONFIG.PCW_MIO_6_SLEW {slow} \
+CONFIG.PCW_MIO_7_PULLUP {disabled} \
 CONFIG.PCW_MIO_7_SLEW {slow} \
+CONFIG.PCW_MIO_8_PULLUP {disabled} \
 CONFIG.PCW_MIO_8_SLEW {slow} \
 CONFIG.PCW_MIO_9_PULLUP {disabled} \
 CONFIG.PCW_MIO_9_SLEW {slow} \
-CONFIG.PCW_PACKAGE_NAME {clg400} \
-CONFIG.PCW_PRESET_BANK0_VOLTAGE {LVCMOS 3.3V} \
 CONFIG.PCW_PRESET_BANK1_VOLTAGE {LVCMOS 1.8V} \
 CONFIG.PCW_QSPI_GRP_FBCLK_ENABLE {1} \
-CONFIG.PCW_QSPI_GRP_FBCLK_IO {MIO 8} \
-CONFIG.PCW_QSPI_GRP_SINGLE_SS_ENABLE {1} \
-CONFIG.PCW_QSPI_GRP_SINGLE_SS_IO {MIO 1 .. 6} \
-CONFIG.PCW_QSPI_PERIPHERAL_CLKSRC {IO PLL} \
 CONFIG.PCW_QSPI_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_QSPI_PERIPHERAL_FREQMHZ {200} \
 CONFIG.PCW_SD0_GRP_CD_ENABLE {1} \
 CONFIG.PCW_SD0_GRP_CD_IO {MIO 46} \
-CONFIG.PCW_SD0_GRP_WP_ENABLE {0} \
+CONFIG.PCW_SD0_GRP_WP_ENABLE {1} \
+CONFIG.PCW_SD0_GRP_WP_IO {MIO 50} \
 CONFIG.PCW_SD0_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_SD0_SD0_IO {MIO 40 .. 45} \
-CONFIG.PCW_SD1_GRP_CD_ENABLE {1} \
-CONFIG.PCW_SD1_GRP_WP_ENABLE {0} \
 CONFIG.PCW_SD1_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_SD1_SD1_IO {MIO 10 .. 15} \
-CONFIG.PCW_SDIO_PERIPHERAL_CLKSRC {IO PLL} \
 CONFIG.PCW_SDIO_PERIPHERAL_FREQMHZ {50} \
-CONFIG.PCW_TTC0_CLK0_PERIPHERAL_CLKSRC {CPU_1X} \
-CONFIG.PCW_TTC0_CLK1_PERIPHERAL_CLKSRC {CPU_1X} \
-CONFIG.PCW_TTC0_CLK2_PERIPHERAL_CLKSRC {CPU_1X} \
-CONFIG.PCW_TTC0_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_TTC0_TTC0_IO {EMIO} \
+CONFIG.PCW_UART0_GRP_FULL_ENABLE {1} \
+CONFIG.PCW_UART0_PERIPHERAL_ENABLE {1} \
 CONFIG.PCW_UART1_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_UART1_UART1_IO {MIO 48 .. 49} \
-CONFIG.PCW_UART_PERIPHERAL_CLKSRC {IO PLL} \
-CONFIG.PCW_UART_PERIPHERAL_FREQMHZ {50} \
-CONFIG.PCW_UIPARAM_ACT_DDR_FREQ_MHZ {533.333374} \
-CONFIG.PCW_UIPARAM_DDR_BL {8} \
-CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY0 {0.240} \
-CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY1 {0.238} \
-CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY2 {0.283} \
-CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY3 {0.284} \
-CONFIG.PCW_UIPARAM_DDR_BUS_WIDTH {32 Bit} \
-CONFIG.PCW_UIPARAM_DDR_CLOCK_0_LENGTH_MM {33.621} \
-CONFIG.PCW_UIPARAM_DDR_CLOCK_1_LENGTH_MM {33.621} \
-CONFIG.PCW_UIPARAM_DDR_CLOCK_2_LENGTH_MM {48.166} \
-CONFIG.PCW_UIPARAM_DDR_CLOCK_3_LENGTH_MM {48.166} \
-CONFIG.PCW_UIPARAM_DDR_DQS_0_LENGTH_MM {38.200} \
-CONFIG.PCW_UIPARAM_DDR_DQS_1_LENGTH_MM {38.692} \
-CONFIG.PCW_UIPARAM_DDR_DQS_2_LENGTH_MM {38.778} \
-CONFIG.PCW_UIPARAM_DDR_DQS_3_LENGTH_MM {38.635} \
-CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_0 {-0.036} \
-CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_1 {-0.036} \
-CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_2 {0.058} \
-CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_3 {0.057} \
-CONFIG.PCW_UIPARAM_DDR_DQ_0_LENGTH_MM {38.671} \
-CONFIG.PCW_UIPARAM_DDR_DQ_1_LENGTH_MM {38.635} \
-CONFIG.PCW_UIPARAM_DDR_DQ_2_LENGTH_MM {38.671} \
-CONFIG.PCW_UIPARAM_DDR_DQ_3_LENGTH_MM {38.679} \
-CONFIG.PCW_UIPARAM_DDR_MEMORY_TYPE {DDR 3 (Low Voltage)} \
+CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY0 {.294} \
+CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY1 {.298} \
+CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY2 {.338} \
+CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY3 {.334} \
+CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_0 {-0.073} \
+CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_1 {-0.072} \
+CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_2 {0.024} \
+CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_3 {0.023} \
 CONFIG.PCW_UIPARAM_DDR_PARTNO {MT41K256M16 RE-125} \
 CONFIG.PCW_UIPARAM_DDR_TRAIN_DATA_EYE {1} \
 CONFIG.PCW_UIPARAM_DDR_TRAIN_READ_GATE {1} \
 CONFIG.PCW_UIPARAM_DDR_TRAIN_WRITE_LEVEL {1} \
 CONFIG.PCW_UIPARAM_DDR_USE_INTERNAL_VREF {1} \
 CONFIG.PCW_USB0_PERIPHERAL_ENABLE {1} \
-CONFIG.PCW_USB0_USB0_IO {MIO 28 .. 39} \
+CONFIG.PCW_USB0_RESET_ENABLE {1} \
+CONFIG.PCW_USB0_RESET_IO {MIO 7} \
+CONFIG.PCW_USB_RESET_ENABLE {1} \
 CONFIG.PCW_USE_FABRIC_INTERRUPT {0} \
 CONFIG.PCW_USE_M_AXI_GP0 {1} \
-CONFIG.PCW_USE_M_AXI_GP1 {0} \
+CONFIG.PCW_USE_S_AXI_HP0 {0} \
  ] $processing_system7_0
 
   # Create instance: processing_system7_0_axi_periph, and set properties
@@ -391,6 +365,9 @@ CONFIG.NUM_MI {2} \
   # Create instance: rst_processing_system7_0_50M, and set properties
   set rst_processing_system7_0_50M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_processing_system7_0_50M ]
 
+  # Create instance: wireless_mgr_0, and set properties
+  set wireless_mgr_0 [ create_bd_cell -type ip -vlnv vttek.vn:user:wireless_mgr:1.0 wireless_mgr_0 ]
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA] [get_bd_intf_pins axi_bram_ctrl_0_bram/BRAM_PORTA]
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
@@ -400,64 +377,136 @@ CONFIG.NUM_MI {2} \
   connect_bd_intf_net -intf_net processing_system7_0_axi_periph_M01_AXI [get_bd_intf_pins axi_gpio_0/S_AXI] [get_bd_intf_pins processing_system7_0_axi_periph/M01_AXI]
 
   # Create port connections
-  connect_bd_net -net axi_bram_ctrl_0_bram_clk_b [get_bd_pins axi_bram_ctrl_0/bram_clk_b] [get_bd_pins axi_bram_ctrl_0_bram/clkb] [get_bd_pins dac_core_0/clk_i] [get_bd_pins ila_0/clk]
-  connect_bd_net -net axi_bram_ctrl_0_bram_doutb [get_bd_pins axi_bram_ctrl_0_bram/doutb] [get_bd_pins dac_core_0/data_i] [get_bd_pins ila_0/probe3]
-  connect_bd_net -net axi_bram_ctrl_0_bram_rst_b [get_bd_pins axi_bram_ctrl_0/bram_rst_b] [get_bd_pins axi_bram_ctrl_0_bram/rstb] [get_bd_pins dac_core_0/reset] [get_bd_pins ila_0/probe0]
-  connect_bd_net -net axi_gpio_0_gpio2_io_o [get_bd_pins axi_gpio_0/gpio2_io_i] [get_bd_pins axi_gpio_0/gpio2_io_o] [get_bd_pins dac_core_0/n_sample] [get_bd_pins ila_0/probe2]
-  connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins axi_bram_ctrl_0_bram/enb] [get_bd_pins axi_gpio_0/gpio_io_i] [get_bd_pins axi_gpio_0/gpio_io_o] [get_bd_pins dac_core_0/enable] [get_bd_pins ila_0/probe1]
-  connect_bd_net -net dac_core_0_bram_rd_addr [get_bd_pins axi_bram_ctrl_0_bram/addrb] [get_bd_pins dac_core_0/bram_rd_addr] [get_bd_pins ila_0/probe4]
-  connect_bd_net -net dac_core_0_dac_clk [get_bd_ports dac_clk] [get_bd_pins dac_core_0/dac_clk]
-  connect_bd_net -net dac_core_0_data_o [get_bd_ports dac_data_o] [get_bd_pins dac_core_0/data_o]
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0_axi_periph/ACLK] [get_bd_pins processing_system7_0_axi_periph/M00_ACLK] [get_bd_pins processing_system7_0_axi_periph/M01_ACLK] [get_bd_pins processing_system7_0_axi_periph/S00_ACLK] [get_bd_pins rst_processing_system7_0_50M/slowest_sync_clk]
-  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_processing_system7_0_50M/ext_reset_in]
+  connect_bd_net -net Net1 [get_bd_ports WL_DAT] [get_bd_pins wireless_mgr_0/WL_DAT]
+  connect_bd_net -net Net2 [get_bd_ports WL_CMD] [get_bd_pins wireless_mgr_0/WL_CMD]
+  connect_bd_net -net PL_PMOD_PIN1_1 [get_bd_ports PL_PMOD_PIN1] [get_bd_pins PL_pmod_mgr_0/PL_PMOD_PIN1]
+  connect_bd_net -net PL_PMOD_PIN3_1 [get_bd_ports PL_PMOD_PIN3] [get_bd_pins PL_pmod_mgr_0/PL_PMOD_PIN3]
+  connect_bd_net -net PL_PMOD_PIN8_1 [get_bd_ports PL_PMOD_PIN8] [get_bd_pins PL_pmod_mgr_0/PL_PMOD_PIN8]
+  connect_bd_net -net PL_pmod_mgr_0_BT_HOST_WAKE [get_bd_pins PL_pmod_mgr_0/BT_HOST_WAKE] [get_bd_pins gpio_mgr_0/pin_io_01]
+  connect_bd_net -net PL_pmod_mgr_0_PL_PMOD_PIN2 [get_bd_ports PL_PMOD_PIN2] [get_bd_pins PL_pmod_mgr_0/PL_PMOD_PIN2]
+  connect_bd_net -net PL_pmod_mgr_0_PL_PMOD_PIN4 [get_bd_ports PL_PMOD_PIN4] [get_bd_pins PL_pmod_mgr_0/PL_PMOD_PIN4]
+  connect_bd_net -net PL_pmod_mgr_0_PL_PMOD_PIN7 [get_bd_ports PL_PMOD_PIN7] [get_bd_pins PL_pmod_mgr_0/PL_PMOD_PIN7]
+  connect_bd_net -net PL_pmod_mgr_0_ZYNQ_UART_CTS [get_bd_pins PL_pmod_mgr_0/ZYNQ_UART_CTS] [get_bd_pins processing_system7_0/UART0_CTSN]
+  connect_bd_net -net PL_pmod_mgr_0_ZYNQ_UART_RX [get_bd_pins PL_pmod_mgr_0/ZYNQ_UART_RX] [get_bd_pins processing_system7_0/UART0_RX]
+  connect_bd_net -net WL_HOST_WAKE_1 [get_bd_ports WL_HOST_WAKE] [get_bd_pins gpio_mgr_0/pin_io_03]
+  connect_bd_net -net axi_bram_ctrl_0_bram_doutb [get_bd_pins axi_bram_ctrl_0_bram/doutb] [get_bd_pins dac_core_0/data_in]
+  connect_bd_net -net axi_bram_ctrl_0_bram_en_b [get_bd_pins axi_bram_ctrl_0/bram_en_b] [get_bd_pins axi_bram_ctrl_0_bram/enb]
+  connect_bd_net -net axi_bram_ctrl_0_bram_rst_b [get_bd_pins axi_bram_ctrl_0/bram_rst_b] [get_bd_pins axi_bram_ctrl_0_bram/rstb]
+  connect_bd_net -net axi_gpio_0_gpio2_io_o [get_bd_pins axi_gpio_0/gpio2_io_i] [get_bd_pins axi_gpio_0/gpio2_io_o] [get_bd_pins dac_core_0/n_sample]
+  connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins axi_gpio_0/gpio_io_i] [get_bd_pins axi_gpio_0/gpio_io_o] [get_bd_pins dac_core_0/start_i]
+  connect_bd_net -net dac_core_0_bram_rd_addr [get_bd_pins axi_bram_ctrl_0_bram/addrb] [get_bd_pins dac_core_0/bram_rd_addr]
+  connect_bd_net -net dac_core_0_clk_out [get_bd_ports dac_clk_out] [get_bd_pins dac_core_0/clk_out]
+  connect_bd_net -net dac_core_0_data_out [get_bd_ports dac_data_out] [get_bd_pins dac_core_0/data_out]
+  connect_bd_net -net gpio_mgr_0_pin_io_00 [get_bd_pins PL_pmod_mgr_0/BT_REG_ON] [get_bd_pins gpio_mgr_0/pin_io_00]
+  connect_bd_net -net gpio_mgr_0_pin_io_02 [get_bd_ports WL_REG_ON] [get_bd_pins gpio_mgr_0/pin_io_02]
+  connect_bd_net -net gpio_mgr_0_to_cpu_out [get_bd_pins gpio_mgr_0/to_cpu_out] [get_bd_pins processing_system7_0/GPIO_I]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0_bram/clkb] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins dac_core_0/clk_in] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins processing_system7_0_axi_periph/ACLK] [get_bd_pins processing_system7_0_axi_periph/M00_ACLK] [get_bd_pins processing_system7_0_axi_periph/M01_ACLK] [get_bd_pins processing_system7_0_axi_periph/S00_ACLK] [get_bd_pins rst_processing_system7_0_50M/slowest_sync_clk]
+  connect_bd_net -net processing_system7_0_FCLK_CLK1 [get_bd_pins PL_pmod_mgr_0/clk_in] [get_bd_pins processing_system7_0/FCLK_CLK1]
+  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins PL_pmod_mgr_0/resetn_in] [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_processing_system7_0_50M/ext_reset_in]
+  connect_bd_net -net processing_system7_0_GPIO_O [get_bd_pins gpio_mgr_0/from_cpu_in] [get_bd_pins processing_system7_0/GPIO_O]
+  connect_bd_net -net processing_system7_0_GPIO_T [get_bd_pins gpio_mgr_0/dir_in] [get_bd_pins processing_system7_0/GPIO_T]
+  connect_bd_net -net processing_system7_0_SDIO1_CLK [get_bd_pins processing_system7_0/SDIO1_CLK] [get_bd_pins wireless_mgr_0/SDIO_CLK]
+  connect_bd_net -net processing_system7_0_SDIO1_CMD_O [get_bd_pins processing_system7_0/SDIO1_CMD_O] [get_bd_pins wireless_mgr_0/SDIO_CMD_I]
+  connect_bd_net -net processing_system7_0_SDIO1_CMD_T [get_bd_pins processing_system7_0/SDIO1_CMD_T] [get_bd_pins wireless_mgr_0/SDIO_CMD_T]
+  connect_bd_net -net processing_system7_0_SDIO1_DATA_O [get_bd_pins processing_system7_0/SDIO1_DATA_O] [get_bd_pins wireless_mgr_0/SDIO_DATA_I]
+  connect_bd_net -net processing_system7_0_SDIO1_DATA_T [get_bd_pins processing_system7_0/SDIO1_DATA_T] [get_bd_pins wireless_mgr_0/SDIO_DATA_T]
+  connect_bd_net -net processing_system7_0_UART0_RTSN [get_bd_pins PL_pmod_mgr_0/ZYNQ_UART_RTS] [get_bd_pins processing_system7_0/UART0_RTSN]
+  connect_bd_net -net processing_system7_0_UART0_TX [get_bd_pins PL_pmod_mgr_0/ZYNQ_UART_TX] [get_bd_pins processing_system7_0/UART0_TX]
   connect_bd_net -net rst_processing_system7_0_50M_interconnect_aresetn [get_bd_pins processing_system7_0_axi_periph/ARESETN] [get_bd_pins rst_processing_system7_0_50M/interconnect_aresetn]
   connect_bd_net -net rst_processing_system7_0_50M_peripheral_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins processing_system7_0_axi_periph/M00_ARESETN] [get_bd_pins processing_system7_0_axi_periph/M01_ARESETN] [get_bd_pins processing_system7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_processing_system7_0_50M/peripheral_aresetn]
+  connect_bd_net -net rst_processing_system7_0_50M_peripheral_reset [get_bd_pins dac_core_0/reset] [get_bd_pins rst_processing_system7_0_50M/peripheral_reset]
+  connect_bd_net -net wireless_mgr_0_SDIO_CDN [get_bd_pins processing_system7_0/SDIO1_CDN] [get_bd_pins wireless_mgr_0/SDIO_CDN]
+  connect_bd_net -net wireless_mgr_0_SDIO_CLK_FB [get_bd_pins processing_system7_0/SDIO1_CLK_FB] [get_bd_pins wireless_mgr_0/SDIO_CLK_FB]
+  connect_bd_net -net wireless_mgr_0_SDIO_CMD_O [get_bd_pins processing_system7_0/SDIO1_CMD_I] [get_bd_pins wireless_mgr_0/SDIO_CMD_O]
+  connect_bd_net -net wireless_mgr_0_SDIO_DATA_O [get_bd_pins processing_system7_0/SDIO1_DATA_I] [get_bd_pins wireless_mgr_0/SDIO_DATA_O]
+  connect_bd_net -net wireless_mgr_0_SDIO_WP [get_bd_pins processing_system7_0/SDIO1_WP] [get_bd_pins wireless_mgr_0/SDIO_WP]
+  connect_bd_net -net wireless_mgr_0_WL_CLK [get_bd_ports WL_CLK] [get_bd_pins wireless_mgr_0/WL_CLK]
 
   # Create address segments
-  create_bd_addr_seg -range 0x2000 -offset 0x40000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
+  create_bd_addr_seg -range 0x4000 -offset 0x40000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
   create_bd_addr_seg -range 0x1000 -offset 0x50000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] SEG_axi_gpio_0_Reg
 
   # Perform GUI Layout
   regenerate_bd_layout -layout_string {
-   da_bram_cntlr_cnt: "2",
-   da_ps7_cnt: "1",
-   guistr: "# # String gsaved with Nlview 6.5.5  2015-06-26 bk=1.3371 VDI=38 GEI=35 GUI=JA:1.8
+   guistr: "# # String gsaved with Nlview 6.5.5  2015-06-26 bk=1.3371 VDI=38 GEI=35 GUI=JA:1.6
 #  -string -flagsOSRD
-preplace port DDR -pg 1 -y 570 -defaultsOSRD
-preplace port dac_clk -pg 1 -y 460 -defaultsOSRD
-preplace port FIXED_IO -pg 1 -y 590 -defaultsOSRD
-preplace portBus dac_data_o -pg 1 -y 480 -defaultsOSRD
-preplace inst axi_bram_ctrl_0_bram -pg 1 -lvl 4 -y 90 -defaultsOSRD
-preplace inst axi_gpio_0 -pg 1 -lvl 3 -y 430 -defaultsOSRD
-preplace inst rst_processing_system7_0_50M -pg 1 -lvl 1 -y 340 -defaultsOSRD
-preplace inst ila_0 -pg 1 -lvl 4 -y 290 -defaultsOSRD
-preplace inst dac_core_0 -pg 1 -lvl 4 -y 480 -defaultsOSRD
-preplace inst axi_bram_ctrl_0 -pg 1 -lvl 3 -y 250 -defaultsOSRD
-preplace inst processing_system7_0_axi_periph -pg 1 -lvl 2 -y 400 -defaultsOSRD
-preplace inst processing_system7_0 -pg 1 -lvl 1 -y 620 -defaultsOSRD
-preplace netloc processing_system7_0_DDR 1 1 4 NJ 540 NJ 540 NJ 570 NJ
-preplace netloc axi_bram_ctrl_0_bram_clk_b 1 3 1 1080
-preplace netloc processing_system7_0_axi_periph_M00_AXI 1 2 1 780
+preplace port DDR -pg 1 -y 820 -defaultsOSRD
+preplace port PL_PMOD_PIN1 -pg 1 -y 610 -defaultsOSRD
+preplace port WL_CMD -pg 1 -y 1140 -defaultsOSRD
+preplace port PL_PMOD_PIN2 -pg 1 -y 670 -defaultsOSRD
+preplace port PL_PMOD_PIN3 -pg 1 -y 630 -defaultsOSRD
+preplace port WL_CLK -pg 1 -y 1120 -defaultsOSRD
+preplace port PL_PMOD_PIN4 -pg 1 -y 690 -defaultsOSRD
+preplace port PL_PMOD_PIN7 -pg 1 -y 710 -defaultsOSRD
+preplace port PL_PMOD_PIN8 -pg 1 -y 650 -defaultsOSRD
+preplace port FIXED_IO -pg 1 -y 840 -defaultsOSRD
+preplace port WL_HOST_WAKE -pg 1 -y 680 -defaultsOSRD
+preplace port WL_REG_ON -pg 1 -y 790 -defaultsOSRD
+preplace port dac_clk_out -pg 1 -y 280 -defaultsOSRD
+preplace portBus WL_DAT -pg 1 -y 1160 -defaultsOSRD
+preplace portBus dac_data_out -pg 1 -y 300 -defaultsOSRD
+preplace inst axi_bram_ctrl_0_bram -pg 1 -lvl 4 -y 440 -defaultsOSRD
+preplace inst PL_pmod_mgr_0 -pg 1 -lvl 4 -y 670 -defaultsOSRD
+preplace inst axi_gpio_0 -pg 1 -lvl 3 -y 110 -defaultsOSRD
+preplace inst gpio_mgr_0 -pg 1 -lvl 3 -y 720 -defaultsOSRD
+preplace inst rst_processing_system7_0_50M -pg 1 -lvl 1 -y 400 -defaultsOSRD
+preplace inst wireless_mgr_0 -pg 1 -lvl 4 -y 1090 -defaultsOSRD
+preplace inst dac_core_0 -pg 1 -lvl 3 -y 300 -defaultsOSRD
+preplace inst axi_bram_ctrl_0 -pg 1 -lvl 3 -y 470 -defaultsOSRD
+preplace inst processing_system7_0_axi_periph -pg 1 -lvl 2 -y 460 -defaultsOSRD
+preplace inst processing_system7_0 -pg 1 -lvl 1 -y 1000 -defaultsOSRD
+preplace netloc processing_system7_0_DDR 1 1 4 NJ 820 NJ 820 NJ 820 NJ
+preplace netloc wireless_mgr_0_SDIO_CLK_FB 1 1 4 NJ 1000 NJ 1000 NJ 1230 1550
+preplace netloc PL_pmod_mgr_0_ZYNQ_UART_CTS 1 1 4 N 920 NJ 920 NJ 920 1540
+preplace netloc PL_pmod_mgr_0_ZYNQ_UART_RX 1 1 4 NJ 940 NJ 940 NJ 940 1510
+preplace netloc dac_core_0_data_out 1 3 2 NJ 300 NJ
+preplace netloc wireless_mgr_0_WL_CLK 1 4 1 NJ
+preplace netloc PL_PMOD_PIN3_1 1 0 4 NJ 630 NJ 630 NJ 630 NJ
+preplace netloc gpio_mgr_0_pin_io_00 1 3 1 1150
+preplace netloc rst_processing_system7_0_50M_peripheral_reset 1 1 2 NJ 280 N
+preplace netloc processing_system7_0_axi_periph_M00_AXI 1 2 1 N
+preplace netloc processing_system7_0_SDIO1_DATA_T 1 1 3 NJ 1120 NJ 1120 1140
+preplace netloc wireless_mgr_0_SDIO_CMD_O 1 1 4 NJ 1040 NJ 1040 NJ 1240 1540
+preplace netloc PL_pmod_mgr_0_PL_PMOD_PIN7 1 4 1 NJ
+preplace netloc processing_system7_0_GPIO_O 1 1 2 450 690 NJ
 preplace netloc rst_processing_system7_0_50M_interconnect_aresetn 1 1 1 N
-preplace netloc processing_system7_0_M_AXI_GP0 1 1 1 460
-preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 3 1 1070
-preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 2 20 250 430
-preplace netloc dac_core_0_dac_clk 1 4 1 NJ
-preplace netloc rst_processing_system7_0_50M_peripheral_aresetn 1 1 2 440 260 770
-preplace netloc axi_gpio_0_gpio_io_o 1 3 1 1110
-preplace netloc processing_system7_0_FIXED_IO 1 1 4 NJ 560 NJ 560 NJ 580 NJ
-preplace netloc axi_bram_ctrl_0_bram_rst_b 1 3 1 1100
-preplace netloc dac_core_0_data_o 1 4 1 NJ
-preplace netloc axi_gpio_0_gpio2_io_o 1 3 1 1090
-preplace netloc processing_system7_0_FCLK_CLK0 1 0 3 10 240 450 240 790
-preplace netloc processing_system7_0_axi_periph_M01_AXI 1 2 1 N
-preplace netloc dac_core_0_bram_rd_addr 1 3 2 1120 390 1430
-preplace netloc axi_bram_ctrl_0_bram_doutb 1 3 1 1130
-levelinfo -pg 1 -10 230 620 930 1280 1450 -top -20 -bot 800
+preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 3 1 1160
+preplace netloc processing_system7_0_M_AXI_GP0 1 1 1 440
+preplace netloc wireless_mgr_0_SDIO_DATA_O 1 1 4 NJ 1080 NJ 1080 NJ 1210 1520
+preplace netloc gpio_mgr_0_pin_io_02 1 3 2 NJ 790 NJ
+preplace netloc processing_system7_0_UART0_RTSN 1 1 3 NJ 880 NJ 880 1170
+preplace netloc PL_pmod_mgr_0_BT_HOST_WAKE 1 2 3 850 560 NJ 550 1550
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 4 30 640 430 640 NJ 620 NJ
+preplace netloc processing_system7_0_SDIO1_CLK 1 1 3 NJ 980 NJ 980 1230
+preplace netloc rst_processing_system7_0_50M_peripheral_aresetn 1 1 2 430 600 830
+preplace netloc processing_system7_0_SDIO1_CMD_O 1 1 3 NJ 1020 NJ 1020 1220
+preplace netloc processing_system7_0_UART0_TX 1 1 3 NJ 650 NJ 640 N
+preplace netloc wireless_mgr_0_SDIO_CDN 1 1 4 NJ 1140 NJ 1140 NJ 1220 1510
+preplace netloc processing_system7_0_GPIO_T 1 1 2 480 710 NJ
+preplace netloc axi_gpio_0_gpio_io_o 1 2 2 840 10 1230
+preplace netloc processing_system7_0_FIXED_IO 1 1 4 NJ 840 NJ 840 NJ 840 NJ
+preplace netloc PL_PMOD_PIN8_1 1 0 4 NJ 660 NJ 660 NJ 800 NJ
+preplace netloc axi_bram_ctrl_0_bram_rst_b 1 3 1 N
+preplace netloc processing_system7_0_SDIO1_DATA_O 1 1 3 NJ 1100 NJ 1100 1190
+preplace netloc Net1 1 4 1 NJ
+preplace netloc PL_pmod_mgr_0_PL_PMOD_PIN2 1 4 1 NJ
+preplace netloc axi_gpio_0_gpio2_io_o 1 2 2 850 210 1230
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 4 20 490 470 620 820 550 NJ
+preplace netloc wireless_mgr_0_SDIO_WP 1 1 4 NJ 1160 NJ 1160 NJ 1250 1530
+preplace netloc processing_system7_0_SDIO1_CMD_T 1 1 3 NJ 1060 NJ 1060 1210
+preplace netloc Net2 1 4 1 NJ
+preplace netloc PL_PMOD_PIN1_1 1 0 4 NJ 610 NJ 610 NJ 610 NJ
+preplace netloc processing_system7_0_FCLK_CLK1 1 1 3 NJ 1240 NJ 1240 1160
+preplace netloc gpio_mgr_0_to_cpu_out 1 1 3 N 760 NJ 810 1140
+preplace netloc processing_system7_0_axi_periph_M01_AXI 1 2 1 810
+preplace netloc PL_pmod_mgr_0_PL_PMOD_PIN4 1 4 1 NJ
+preplace netloc WL_HOST_WAKE_1 1 0 3 NJ 680 NJ 680 NJ
+preplace netloc axi_bram_ctrl_0_bram_en_b 1 3 1 N
+preplace netloc axi_bram_ctrl_0_bram_doutb 1 2 2 850 390 NJ
+preplace netloc dac_core_0_clk_out 1 3 2 NJ 280 NJ
+preplace netloc dac_core_0_bram_rd_addr 1 3 1 1230
+levelinfo -pg 1 -10 230 660 1000 1370 1570 -top 0 -bot 1310
 ",
-   }
-{
-   da_axi4_cnt: "8",
 }
 
   # Restore current instance
