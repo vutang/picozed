@@ -16,7 +16,7 @@
 		spi0 = &qspi;
 	};
 	chosen {
-		bootargs = "console=ttyPS0,115200 earlyprintk";
+		bootargs = "console=ttyPS1,115200 earlyprintk";
 	};
 	memory {
 		device_type = "memory";
